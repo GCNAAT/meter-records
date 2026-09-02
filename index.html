@@ -141,8 +141,8 @@ main{max-width:680px;margin:0 auto}
 .s-foot-btn{display:flex;gap:10px;padding:2px 16px 16px}
 .s-foot-btn .btn{flex:1}
 
-.top .head-logo{background:#fff;border-radius:8px;padding:5px 8px;flex:none}
-.top .head-logo img{display:block;height:30px;width:auto}
+.top .head-logo{background:#fff;border-radius:7px;padding:0;overflow:hidden;flex:none;width:60px;height:26px}
+.top .head-logo img{display:block;height:26px;width:auto;max-width:none;margin-left:-3px}
 
 /* 历史记录按日期分组 */
 .day-group{margin:2px 14px 14px}
@@ -1067,11 +1067,13 @@ function buildRecordDOM(rec){     // 构造 A4 单据 DOM（中文用浏览器�
     box.appendChild(p);
   }
   var hd=el('div','display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #0a4f4a;padding-bottom:16px;margin-bottom:20px;');
-  var lg=document.createElement('img');lg.src=LOGO_SRC;lg.alt='粤海天河城';lg.style.cssText='height:44px;width:auto;';
+  var lw=el('div','width:62px;height:26px;overflow:hidden;');
+  var lg=document.createElement('img');lg.src=LOGO_SRC;lg.alt='粤海天河城';lg.style.cssText='height:26px;width:auto;display:block;margin-left:-3px;max-width:none;';
+  lw.appendChild(lg);
   var tb=el('div','text-align:right;');
   tb.appendChild(el('div','font-size:22px;font-weight:700;color:#0a4f4a;','商铺抄表（用水）记录单'));
   tb.appendChild(el('div','font-size:12px;color:#667;margin-top:4px;','抄表日期：'+rec.date));
-  hd.appendChild(lg);hd.appendChild(tb);box.appendChild(hd);
+  hd.appendChild(lw);hd.appendChild(tb);box.appendChild(hd);
   row('单据编号',rec.id);
   row('商户',rec.no+' · '+rec.name);
   row('负责员工 / 楼层','员工'+sp.emp+' / '+((sp.floor||'-'))+' 层');
