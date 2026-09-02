@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b4f4a">
+<title>商铺抄表签字系统 · 天津粤海天河城购物中心</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='11' fill='%230a4f4a'/%3E%3Cpath d='M12 4.8c2.9 3.7 5.6 6.6 5.6 9.7a5.6 5.6 0 0 1-11.2 0c0-3.1 2.7-6 5.6-9.7z' fill='%2363c7be'/%3E%3C/svg%3E">
+<style>
+:root{
+  --font:-apple-system,BlinkMacSystemFont,"PingFang SC","HarmonyOS Sans SC","MiSans","Microsoft YaHei","Noto Sans CJK SC","WenQuanYi Micro Hei",sans-serif;
+  --mono:"SF Mono","Cascadia Mono",Consolas,"Courier New",monospace;
+  --card:#ffffff; --ink:#123332; --ink2:#41615e; --muted:#7d9795;
+  --teal:#0e7c74; --deep:#0a4f4a; --aqua:#63c7be; --aqua-soft:#dff0ee;
+  --line:#dce9e7; --amber:#c07a17; --amber-bg:#fcf2e0; --amber-line:#f0dcb4;
+  --green:#1e8a58; --green-bg:#e3f4ea; --green-line:#c4e5d2;
+  --red:#c05050; --r:18px;
+  --shadow:0 2px 12px rgba(16,58,55,.07),0 1px 2px rgba(16,58,55,.05);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{font-size:16px}
+body{font-family:var(--font);color:var(--ink);min-height:100vh;background:#eef4f3;padding-bottom:96px}
+body::before{content:'';position:fixed;inset:0;z-index:-1;
+  background:
+    radial-gradient(circle at 12% 16%, rgba(99,199,190,.16), transparent 42%),
+    radial-gradient(circle at 88% 8%, rgba(14,124,116,.12), transparent 46%),
+    linear-gradient(180deg,#f3f9f8 0%,#e9f1f0 60%,#e7efee 100%);}
+button{font-family:var(--font);cursor:pointer}
+.hidden{display:none !important}
+svg{display:block}
+
+/* ===== 顶部 ===== */
+.top{position:sticky;top:0;z-index:50;color:#fff;padding:14px 16px 30px;
+  background:linear-gradient(135deg,#0b4f4a 0%,#0e7c74 62%,#17968b 100%);
+  border-radius:0 0 24px 24px;box-shadow:0 6px 22px rgba(10,79,74,.28)}
+.top::after{content:'';position:absolute;left:0;right:0;bottom:10px;height:12px;opacity:.28;
+  background:repeating-linear-gradient(90deg,transparent 0 10px,rgba(255,255,255,.85) 10px 11px,transparent 11px 20px)}
+.brand{display:flex;align-items:center;gap:11px;position:relative;z-index:2}
+.logo{width:44px;height:44px;border-radius:14px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);
+  display:flex;align-items:center;justify-content:center;flex:none}
+.brand h1{font-size:17.5px;letter-spacing:.02em}
+.brand p{font-size:10.5px;opacity:.78;margin-top:2px;letter-spacing:.04em}
+.gear{margin-left:auto;width:38px;height:38px;border-radius:12px;border:1px solid rgba(255,255,255,.3);
+  background:rgba(255,255,255,.14);color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
+.sub{display:flex;gap:8px;margin-top:12px;position:relative;z-index:2}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.32);
+  background:rgba(255,255,255,.14);color:#fff;border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:600;max-width:60%}
+.chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip.sync{margin-left:auto;max-width:44%;font-weight:500}
+.dot{width:7px;height:7px;border-radius:50%;background:#ffd479;flex:none;box-shadow:0 0 0 3px rgba(255,212,121,.18)}
+.sync.cloud .dot{background:#8ff0b6;box-shadow:0 0 0 3px rgba(143,240,182,.18)}
+.sync.local .dot{background:#ffd479;box-shadow:0 0 0 3px rgba(255,212,121,.18)}
+.sync.err .dot{background:#ff9d9d;box-shadow:0 0 0 3px rgba(255,157,157,.18)}
+
+/* 页头折叠：收起时只留紧凑条 */
+#foldBtn .chev-down{display:none}
+body.folded #foldBtn .chev-up{display:none}
+body.folded #foldBtn .chev-down{display:block}
+body.folded .top{padding-bottom:18px}
+body.folded .brand p{display:none}
+body.folded #banner,body.folded #tabs,body.folded #subTabs{display:none !important}
+
+/* ===== 主体 ===== */
+main{max-width:680px;margin:0 auto}
+.banner{margin:14px 14px 12px;background:#fff;border:1.5px solid var(--line);border-radius:16px;
+  padding:11px 14px;font-size:12.5px;color:var(--ink2);display:flex;gap:9px;align-items:flex-start;box-shadow:var(--shadow);line-height:1.55}
+.banner b{color:var(--deep)}
+.banner svg{flex:none;margin-top:2px}
+
+/* 统计（管理员） */
+#adminPanel{margin:14px 14px 12px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.st{background:#fff;border-radius:15px;padding:11px 4px 9px;text-align:center;box-shadow:var(--shadow);border:1px solid rgba(219,233,231,.9)}
+.st b{font-family:var(--mono);font-size:19px;color:var(--deep);display:block;font-variant-numeric:tabular-nums}
+.st small{font-size:10.5px;color:var(--muted)}
+.st.hot b{color:var(--teal)}
+.rank{background:#fff;border-radius:16px;padding:13px 15px 9px;margin-top:10px;box-shadow:var(--shadow);border:1px solid rgba(219,233,231,.9)}
+.rank h4{font-size:13.5px;margin-bottom:11px;display:flex;align-items:center;gap:6px;color:var(--deep)}
+.rk{display:flex;align-items:center;gap:8px;margin-bottom:9px;font-size:12px}
+.rk .lbl{width:104px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:none}
+.rk .lbl em{font-style:normal;color:var(--muted);font-size:10.5px}
+.rk .bar{flex:1;height:9px;border-radius:999px;background:#e7f1ef;overflow:hidden}
+.rk .bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--aqua),var(--teal));min-width:4px}
+.rk.amberline .bar i{background:linear-gradient(90deg,#f2c063,var(--amber))}
+.rk .val{width:70px;text-align:right;font-family:var(--mono);color:var(--deep);font-weight:700;font-size:12px;flex:none;font-variant-numeric:tabular-nums}
+.rank .none{font-size:12px;color:var(--muted);padding:4px 0 10px}
+
+/* 筛选 */
+.tabs{display:flex;gap:8px;margin:-26px 14px 12px;position:relative;z-index:5}
+.tab{flex:1;background:#fff;border:1.5px solid var(--line);border-radius:15px;padding:9px 4px 7px;font-size:13px;
+  font-weight:600;color:var(--ink2);text-align:center;box-shadow:var(--shadow)}
+.tab small{display:block;font-size:11px;opacity:.72;font-weight:500;margin-top:1px;font-family:var(--mono)}
+.tab.on{background:linear-gradient(135deg,var(--deep),var(--teal));color:#fff;border-color:transparent}
+
+/* 记录卡片 */
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);border:1px solid rgba(219,233,231,.85);
+  padding:14px 14px 12px;margin:0 14px 12px;animation:rise .32s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.c-head{display:flex;align-items:center;gap:10px}
+.avatar{width:44px;height:44px;border-radius:13px;background:linear-gradient(135deg,var(--aqua-soft),#f7fbfa);
+  color:var(--deep);font-weight:700;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  border:1px solid var(--line);font-family:var(--mono);flex:none;line-height:1.05}
+.avatar b{font-size:15px}
+.avatar small{font-size:9px;color:var(--muted);font-family:var(--font)}
+.c-title{flex:1;min-width:0}
+.c-title b{font-size:15.5px}
+.c-title span{display:block;font-size:11.5px;color:var(--muted);margin-top:2px}
+.pill{font-size:11px;padding:4px 9px;border-radius:999px;font-weight:600;display:inline-flex;gap:4px;align-items:center;flex:none;white-space:nowrap}
+.pill.pending{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-line)}
+.pill.locked{background:var(--green-bg);color:var(--green);border:1px solid var(--green-line)}
+.c-metrics{display:grid;grid-template-columns:1fr 1fr 1.35fr;gap:6px;margin:12px 0 10px;padding:10px 12px;
+  background:#f6faf9;border-radius:13px;border:1px dashed #d5e6e3}
+.m small{font-size:10.5px;color:var(--muted);display:block;margin-bottom:2px}
+.m .num{font-family:var(--mono);font-size:15.5px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.m.hot .num{color:var(--teal);font-size:19px}
+.m.hot small{color:var(--teal);font-weight:600}
+.c-foot{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.meta{font-size:11.5px;color:var(--muted);flex:1;min-width:110px;line-height:1.5}
+.lock-note{font-size:11.5px;color:var(--green);display:inline-flex;gap:3px;align-items:center;font-weight:600}
+
+/* 按钮 */
+.btn{border:none;border-radius:12px;padding:9px 13px;font-size:13px;font-weight:600;display:inline-flex;
+  align-items:center;gap:5px;white-space:nowrap}
+.btn-view{background:#fff;color:var(--deep);border:1.5px solid #bfe0dc}
+.btn-view:active{background:#eef7f6}
+.btn-edit{background:linear-gradient(135deg,var(--teal),#12968b);color:#fff;box-shadow:0 3px 10px rgba(14,124,116,.28)}
+.btn-sign{background:linear-gradient(135deg,#eaa93f,#d98a1f);color:#fff;box-shadow:0 3px 10px rgba(217,138,31,.28)}
+.btn-block{width:100%;justify-content:center;padding:13px;font-size:15px;border-radius:14px}
+.btn-ghost{background:#eef4f3;color:var(--ink2);border:1px solid var(--line)}
+.btn:active{transform:translateY(1px)}
+
+/* 历史记录按日期分组 */
+.day-group{margin:2px 14px 14px}
+.day-head{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--deep);
+  padding:2px 2px 8px;letter-spacing:.01em}
+.day-head small{color:var(--muted);font-weight:500;font-size:11px;margin-left:2px}
+.day-group .card{margin:0 0 10px}
+
+/* 空状态 & 页脚 */
+.empty{margin:26px 14px;text-align:center;color:var(--muted);font-size:13px}
+.empty .eicon{width:64px;height:64px;margin:0 auto 12px;border-radius:20px;background:#fff;border:1px dashed #c9dedb;
+  display:flex;align-items:center;justify-content:center;color:#9fc3bf}
+.empty b{display:block;color:var(--ink2);font-size:14px;margin-bottom:4px}
+.foot{text-align:center;font-size:10.5px;color:#9db3b0;padding:18px 20px 6px;line-height:1.8}
+
+/* FAB */
+.fab{position:fixed;right:18px;bottom:calc(24px + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:50%;
+  background:linear-gradient(135deg,#0e7c74,#17968b);color:#fff;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 10px 24px rgba(14,124,116,.42);z-index:60;border:none}
+.fab:active{transform:scale(.94)}
+
+/* ===== 弹窗 ===== */
+.mask{position:fixed;inset:0;z-index:100;background:rgba(8,34,32,.55);display:none;align-items:center;justify-content:center;padding:14px}
+.mask.show{display:flex}
+.sheet{background:#fdfffe;width:100%;max-width:540px;max-height:calc(100vh - 28px);border-radius:22px;display:flex;
+  flex-direction:column;overflow:hidden;animation:pop .26s cubic-bezier(.2,.9,.32,1.18) both;box-shadow:0 24px 60px rgba(5,38,36,.4)}
+@keyframes pop{from{opacity:0;transform:translateY(30px) scale(.96)}to{opacity:1;transform:none}}
+.s-head{display:flex;align-items:center;gap:10px;padding:15px 16px 13px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,#f2f9f8,#fdfffe);flex:none}
+.s-head h3{font-size:16.5px;flex:1;color:var(--deep)}
+.x{width:34px;height:34px;border-radius:11px;border:1px solid var(--line);background:#fff;color:var(--ink2);
+  display:flex;align-items:center;justify-content:center;flex:none}
+.x:active{background:#eef4f3}
+.s-body{padding:15px 16px 18px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+
+/* 表单 */
+.f{margin-bottom:13px}
+.f label{display:block;font-size:12.5px;font-weight:600;color:var(--ink2);margin-bottom:6px}
+.f label em{color:var(--red);font-style:normal}
+.f input,.f select{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;font-size:15px;
+  font-family:var(--font);background:#fff;color:var(--ink)}
+.f input:focus,.f select:focus{outline:none;border-color:var(--aqua);box-shadow:0 0 0 3px rgba(99,199,190,.18)}
+.f input[type=number]{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.f input[type=number]::-webkit-outer-spin-button,.f input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.usage-box{display:flex;align-items:center;justify-content:space-between;background:var(--aqua-soft);
+  border:1.5px solid #bfe4df;border-radius:12px;padding:11px 14px;margin-bottom:13px}
+.usage-box small{font-size:12px;color:var(--deep);font-weight:600;display:block;margin-bottom:2px}
+.usage-box b{font-family:var(--mono);font-size:24px;color:var(--teal);font-variant-numeric:tabular-nums;line-height:1.15}
+.usage-box .unit{font-size:12px;color:var(--muted);font-weight:600}
+
+/* 签名板 */
+.sign-area{position:relative;border:2px dashed #b7d6d1;border-radius:14px;background:#fbfefd;overflow:hidden}
+.sign-area canvas{display:block;width:100%;height:185px;touch-action:none;cursor:crosshair}
+.sign-area .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:7px;
+  color:#a9c6c2;font-size:13px;pointer-events:none;transition:opacity .18s}
+.sign-area.dirty .ph{opacity:0}
+.sign-foot{display:flex;justify-content:space-between;align-items:center;margin:8px 0 2px}
+.sign-foot small{font-size:11.5px;color:var(--muted)}
+.sign-foot .clr{font-size:12.5px;color:var(--red);background:#fdf1f1;border:1px solid #f1d6d6;border-radius:9px;padding:6px 12px;font-weight:600}
+.sign-foot .clr:active{background:#f7e2e2}
+
+/* 签字弹窗摘要 */
+.sign-rec{background:#f6faf9;border:1.5px solid var(--line);border-radius:13px;padding:12px 14px;margin-bottom:14px}
+.sign-rec h5{font-size:14px;color:var(--deep);margin-bottom:7px;display:flex;align-items:center;gap:7px}
+.sign-rec .sr{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink2);padding:3px 0}
+.sign-rec .sr b{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* 角色子选择 chips */
+.chips{display:flex;gap:7px;overflow-x:auto;padding:2px 14px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.cchip{flex:none;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:7px 13px;font-size:13px;
+  font-weight:600;color:var(--ink2);display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.2}
+.cchip small{font-size:9.5px;color:var(--muted);font-weight:500}
+.cchip.on{background:linear-gradient(135deg,var(--deep),var(--teal));color:#fff;border-color:transparent;
+  box-shadow:0 4px 12px rgba(10,79,74,.25)}
+.cchip.on small{color:rgba(255,255,255,.72)}
+
+/* 详情弹窗 */
+.d-row{display:flex;justify-content:space-between;gap:14px;padding:9px 2px;border-bottom:1px dashed #e0edeb;font-size:13.5px}
+.d-row .k{color:var(--muted);flex:none}
+.d-row .v{text-align:right;color:var(--ink);font-weight:600;word-break:break-all}
+.d-row .v.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.d-sec{font-size:13px;font-weight:700;color:var(--deep);margin:15px 0 8px;display:flex;align-items:center;gap:7px}
+.d-sec::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,#d8e8e6,transparent)}
+.sig-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sig-box{border:1.5px solid var(--line);border-radius:13px;background:#fbfefd;overflow:hidden}
+.sig-box .cap{font-size:11px;color:var(--muted);padding:7px 10px 5px;display:flex;justify-content:space-between;align-items:center}
+.sig-box .cap b{color:var(--ink2);font-size:11.5px}
+.sig-box .imgw{margin:0 8px 8px;border-radius:9px;background:repeating-conic-gradient(#f2f8f7 0 25%,#fff 0 50%) 0 0/14px 14px;
+  border:1px solid #e4efed;display:flex;align-items:center;justify-content:center;min-height:92px;padding:5px}
+.sig-box img{max-width:100%;max-height:100px;object-fit:contain}
+.sig-box.none .imgw{color:#b0c6c3;font-size:12px;font-weight:500}
+.d-lock{margin-top:14px;text-align:center;font-size:12.5px;color:var(--green);background:var(--green-bg);
+  border:1px solid var(--green-line);border-radius:11px;padding:9px;font-weight:600}
+
+/* 设置面板 */
+.sync-note{font-size:12px;line-height:1.75;color:var(--ink2);background:#f2f9f8;border:1px dashed #cfe4e1;
+  border-radius:12px;padding:10px 13px;margin-bottom:13px}
+.sync-note b{color:var(--deep)}
+.sync-note code{font-family:var(--mono);font-size:11px;background:#e8f3f1;border-radius:5px;padding:1px 5px;color:var(--deep)}
+.seg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.seg button{border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:11px 6px;font-size:13.5px;
+  font-weight:600;color:var(--ink2)}
+.seg button.on{border-color:var(--teal);color:var(--teal);background:#eaf6f4}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(16px);
+  background:rgba(9,48,44,.93);color:#fff;font-size:13px;padding:11px 19px;border-radius:999px;opacity:0;
+  pointer-events:none;transition:.28s;z-index:300;max-width:84vw;text-align:center;box-shadow:0 8px 24px rgba(5,38,36,.3)}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.warn{background:rgba(146,68,18,.95)}
+#toast.ok{background:rgba(14,92,66,.95)}
+
+@media (max-width:420px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .sig-grid{grid-template-columns:1fr}
+  .rk .lbl{width:90px}
+  .m .num{font-size:14px}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <div class="logo">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9.2" stroke="#fff" stroke-width="1.8"/>
+        <path d="M12 12 L16.2 8.4" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="12" cy="12" r="1.4" fill="#fff"/>
+        <path d="M12 5.6v1.6M12 16.8v1.6M5.6 12h1.6M16.8 12h1.6" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div>
+      <h1>商铺抄表签字系统</h1>
+      <p>天津粤海天河城购物中心 · 创新大赛演示</p>
+    </div>
+    <button class="gear" id="btnSettings" aria-label="数据同步设置">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3.2"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+    </button>
+    <button class="gear" id="foldBtn" aria-label="收起或展开视角选择" aria-expanded="false">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path class="chev-up" d="M6 15l6-6 6 6"/>
+        <path class="chev-down" d="M6 9l6 6 6-6"/>
+      </svg>
+    </button>
+  </div>
+  <div class="sub">
+    <button class="chip" id="roleChip"><span id="roleTxt">员工A · 负责商户101/102</span></button>
+    <div class="chip sync local" id="syncChip"><i class="dot"></i><span id="syncTxt">本地模式</span></div>
+  </div>
+</header>
+
+<main>
+  <div class="banner" id="banner">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0e7c74" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M12 11v5"/></svg>
+    <span id="bannerTxt">您是员工A，负责商户 101 / 102。可新增抄表记录，编辑未确认记录；商户确认签字后记录将锁定。</span>
+  </div>
+
+  <section id="adminPanel" class="hidden">
+    <div class="stats">
+      <div class="st"><b id="stTotal">0</b><small>抄表记录</small></div>
+      <div class="st hot"><b id="stDone">0</b><small>商户已确认</small></div>
+      <div class="st"><b id="stWait">0</b><small>待商户确认</small></div>
+      <div class="st"><b id="stUsage">0</b><small>总用水量 m³</small></div>
+    </div>
+    <div class="rank">
+      <h4>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0a4f4a" stroke-width="2" stroke-linecap="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        员工抄表量排名（条数 / 覆盖用水量）
+      </h4>
+      <div id="rankBody"></div>
+    </div>
+  </section>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab" data-g="admin">管理员<small>统计视角</small></button>
+    <button class="tab on" data-g="emp">员工<small>角色 A–H</small></button>
+    <button class="tab" data-g="shop">商户<small>角色 101–808</small></button>
+  </nav>
+  <div class="chips" id="subTabs"></div>
+
+  <section id="list"></section>
+
+  <div class="empty hidden" id="empty">
+    <div class="eicon">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+        <path d="M9 3h6l1 3h3a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3z"/>
+        <path d="M9 12l2 2 4-4"/>
+      </svg>
+    </div>
+    <b>暂无抄表记录</b>
+    该角色视角下还没有记录，员工可点击右下角按钮新增。
+  </div>
+
+  <footer class="foot">
+    商铺抄表签字系统 · 天津粤海天河城购物中心 创新大赛参赛作品<br>
+    数据存储：免登录共享 / GitHub Issues / 浏览器本地 · 签名经 base64 存档
+  </footer>
+</main>
+
+<button class="fab" id="fab" aria-label="新增抄表记录">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+
+<div id="toast"></div>
+
+<!-- 弹窗①：编辑录入 -->
+<div class="mask" id="mEdit">
+  <div class="sheet">
+    <div class="s-head">
+      <h3 id="editTitle">新增抄表</h3>
+      <button class="x" data-close="mEdit" aria-label="关闭">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="s-body">
+      <div class="f"><label for="fShop">商户 <em>*</em></label><select id="fShop" aria-label="选择商户"></select></div>
+      <div class="two">
+        <div class="f"><label for="fPrev">上期水表读数 <em>*</em></label><input type="number" id="fPrev" aria-label="上期水表读数" step="0.01" min="0" inputmode="decimal" placeholder="如 1206.50"></div>
+        <div class="f"><label for="fCurr">本期水表读数 <em>*</em></label><input type="number" id="fCurr" aria-label="本期水表读数" step="0.01" min="0" inputmode="decimal" placeholder="如 1245.20"></div>
+      </div>
+      <div class="usage-box">
+        <div>
+          <small>本期用水量（自动计算）</small>
+          <b id="fUsage">0.00</b> <span class="unit">m³</span>
+        </div>
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#0e7c74" stroke-width="1.7">
+          <path d="M12 2.7c3.4 4.3 6.5 7.7 6.5 11.4A6.5 6.5 0 0 1 12 20.6a6.5 6.5 0 0 1-6.5-6.5C5.5 10.4 8.6 7 12 2.7z"/>
+          <path d="M9.2 13.8a2.9 2.9 0 0 0 2.8 3.4" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="two">
+        <div class="f"><label for="fDate">抄表日期 <em>*</em></label><input type="date" id="fDate" aria-label="抄表日期"></div>
+        <div class="f"><label for="fReader">抄表人 <em>*</em></label><input id="fReader" aria-label="抄表人" readonly></div>
+      </div>
+      <div class="f">
+        <label>员工签名 <em>*</em></label>
+        <div class="sign-area" id="areaEdit"><canvas id="cvEdit"></canvas>
+          <div class="ph"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>请在此区域手写员工签名</div>
+        </div>
+        <div class="sign-foot"><small>用手指或鼠标在上方书写</small><button class="clr" id="clrEdit">清空签名</button></div>
+      </div>
+      <button class="btn btn-edit btn-block" id="saveEdit">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        <span id="saveEditTxt">保存抄表记录</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗②：商户签字确认 -->
+<div class="mask" id="mSign">
+  <div class="sheet">
+    <div class="s-head">
+      <h3>商户确认签字</h3>
+      <button class="x" data-close="mSign" aria-label="关闭">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="s-body">
+      <div class="sign-rec" id="signRec"></div>
+      <div class="f">
+        <label>商户确认签名 <em>*</em></label>
+        <div class="sign-area" id="areaSign"><canvas id="cvSign"></canvas>
+          <div class="ph"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>请商户本人在此区域手写签名</div>
+        </div>
+        <div class="sign-foot"><small>签字确认后本条记录将锁定，员工不可再编辑</small><button class="clr" id="clrSign">清空签名</button></div>
+      </div>
+      <button class="btn btn-sign btn-block" id="saveSign">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+        确认签字并锁定记录
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 弹窗③：查看详情（只读，img 渲染签名） -->
+<div class="mask" id="mView">
+  <div class="sheet">
+    <div class="s-head">
+      <h3>抄表记录详情</h3>
+      <button class="x" data-close="mView" aria-label="关闭">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="s-body" id="viewBody"></div>
+  </div>
+</div>
+
+<!-- 弹窗④：数据同步设置 -->
+<div class="mask" id="mSet">
+  <div class="sheet">
+    <div class="s-head">
+      <h3>数据同步设置</h3>
+      <button class="x" data-close="mSet" aria-label="关闭">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="s-body">
+      <div class="seg">
+        <button id="segLocal" type="button">仅本地</button>
+        <button id="segShare" type="button">免登录共享</button>
+        <button id="segCloud" type="button">GitHub同步</button>
+      </div>
+      <div id="shareCfg" class="hidden">
+        <div class="f"><label for="setBin">共享库 ID（同一 ID 的设备数据互通）</label><input id="setBin" aria-label="共享库 ID" placeholder="留空即用内置演示库" autocapitalize="off" spellcheck="false" maxlength="60"></div>
+        <div class="sync-note">
+          <b>使用说明：</b>免登录共享模式<b>无需注册任何账号或令牌</b>。所有设备填写同一个「共享库 ID」即可互相看到抄表与签字数据（留空使用内置演示库，可直接体验）；也可自定义 6–60 位字母 / 数字 / 连字符 ID，建立独立的数据空间。<b>注意：</b>该模式数据公开可读写，适合演示与日常协作，请勿存放敏感信息。
+        </div>
+        <button class="btn btn-ghost btn-block" id="btnSharePull">测试共享库并拉取数据</button>
+      </div>
+      <div id="cloudCfg">
+        <div class="f"><label for="setRepo">GitHub 仓库（owner/repo）</label><input id="setRepo" aria-label="GitHub 仓库" placeholder="GCNAAT/meter-records" autocapitalize="off" spellcheck="false"></div>
+        <div class="f"><label for="setToken">GitHub Token（写操作需要，选填）</label><input id="setToken" type="password" aria-label="GitHub Token" autocomplete="new-password" placeholder="ghp_ 或 github_pat_ 开头" autocapitalize="off" spellcheck="false"></div>
+        <div class="sync-note">
+          <b>使用说明：</b>云同步模式下，每条抄表记录存为一个 GitHub Issue，公开读取、令牌写入，<b>跨设备/跨用户可共享数据</b>。若仓库尚未开通 Issues，可在 GitHub 上新建仓库 <code>GCNAAT/meter-records</code> 并勾选「Add a README」即可。未配置令牌或网络不可达时，系统自动降级为本地存储，不影响使用。
+        </div>
+        <button class="btn btn-ghost btn-block" id="btnPull">测试连接并拉取云端数据</button>
+      </div>
+      <button class="btn btn-edit btn-block" id="saveSet" style="margin-top:10px">保存设置</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+/* ================= 基础数据 ================= */
+/* 真实商户：FLOORS[k] 为 k 楼层两户，商户号为 楼号+01/02 */
+var FLOORS=[['星巴克','M Stand'],['六福珠宝','周大福'],['波波笑剧场','热风'],
+  ['大吉利','寿司郎'],['汤姆熊','广州购书中心'],['梨花自助烤肉','大渔铁板烧'],
+  ['金掌勺','山上下'],['比格','绿茶']];
+var SHOPS=[];               // {no,emp,name,start}  start=楼层
+for(var s=1;s<=8;s++){
+  var emp=String.fromCharCode(64+s);
+  ['01','02'].forEach(function(suf,i){
+    var no=''+s+suf;
+    SHOPS.push({no:no,emp:emp,name:FLOORS[s-1][i],start:s});
+  });
+}
+function shopOf(no){for(var i=0;i<SHOPS.length;i++)if(SHOPS[i].no===no)return SHOPS[i];return null;}
+function empShops(e){return SHOPS.filter(function(x){return x.emp===e;});}
+
+/* ================= 状态 ================= */
+var CFG_KEY='meter_cfg_v1',REC_KEY='meter_recs_v1',FOLD_KEY='meter_fold_v1';
+var DEFAULT_BIN='mtmeterzfopu0j4xe';   // 内置演示共享库前缀（留空即用）
+var GH={repo:'GCNAAT/meter-records',token:'',mode:'local',bin:DEFAULT_BIN,issueOf:{}};
+var state={group:'emp',who:'A'};           // group: admin|emp|shop
+var recs=[];                                // 全量记录
+var editId=null,signId=null;                // 当前弹窗操作对象
+var $=function(id){return document.getElementById(id);};
+
+/* ================= 本地存储 ================= */
+function loadCfg(){try{var c=JSON.parse(localStorage.getItem(CFG_KEY)||'{}');
+  if(c.repo)GH.repo=c.repo;if(c.token)GH.token=c.token;
+  if(c.bin&&/^[0-9a-zA-Z-_]{6,60}$/.test(c.bin))GH.bin=c.bin;
+  GH.mode=(c.mode==='cloud'||c.mode==='share')?c.mode:'local';}catch(e){}}
+function saveCfg(){try{localStorage.setItem(CFG_KEY,JSON.stringify({repo:GH.repo,token:GH.token,mode:GH.mode,bin:GH.bin}));}catch(e){}}
+
+/* ================= 页头折叠 =================
+   收起时只留「标题 + 角色/同步状态」紧凑条，banner/主标签/子标签全部隐藏；
+   选择角色后自动收起，状态持久化。 */
+var folded=true;
+function loadFold(){try{var v=localStorage.getItem(FOLD_KEY);folded=(v===null)?true:(v==='1');}catch(e){folded=true;}}
+function setFold(f){
+  folded=!!f;
+  try{localStorage.setItem(FOLD_KEY,folded?'1':'0');}catch(e){}
+  document.body.classList.toggle('folded',folded);
+  var b=$('foldBtn');if(b)b.setAttribute('aria-expanded',folded?'false':'true');
+}
+function loadLocal(){try{recs=JSON.parse(localStorage.getItem(REC_KEY)||'[]')||[];}catch(e){recs=[];}}
+function saveLocal(){try{localStorage.setItem(REC_KEY,JSON.stringify(recs));}catch(e){}}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function cleanB64(d){return (d||'').replace(/\s+/g,'');}
+
+/* ================= GitHub Issues 云同步 ================= */
+var GH_LABEL='meter-record';
+function ghHeaders(){
+  var h={'Accept':'application/vnd.github+json'};
+  if(GH.token)h['Authorization']='token '+GH.token;
+  return h;
+}
+function ghFetch(){        // 公开读取全部 issue 记录
+  return fetch('https://api.github.com/repos/'+GH.repo+'/issues?state=open&per_page=100&sort=updated&direction=desc',{headers:ghHeaders()})
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(function(list){
+      var out=[];
+      (list||[]).forEach(function(it){
+        if(!(it.labels||[]).some(function(l){return l===GH_LABEL||l.name===GH_LABEL;}))return;
+        try{var rec=JSON.parse(it.body);if(rec&&rec.id){rec.issue=it.number;out.push(rec);}}catch(e){}
+      });
+      return out;
+    });
+}
+function ghSave(rec){      // 写（需令牌）
+  var headers=ghHeaders();headers['Content-Type']='application/json';
+  var payload={title:'[抄表] '+rec.no+' '+rec.name+' · '+rec.date+' · '+rec.id,body:JSON.stringify(rec),labels:[GH_LABEL]};
+  var url,num;
+  if(rec.issue){url='https://api.github.com/repos/'+GH.repo+'/issues/'+rec.issue;num=rec.issue;}
+  else url='https://api.github.com/repos/'+GH.repo+'/issues';
+  return fetch(url,{method:rec.issue?'PATCH':'POST',headers:headers,body:JSON.stringify(payload)})
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(function(j){rec.issue=j.number;return rec;});
+}
+
+/* ================= 免登录共享（textdb.online 分片存储） =================
+   索引 key = bin+'i'：{v:1,list:{[记录id]:{t:时间,c:是否已确认}}}；
+   分片 key = bin+'r'+记录id：单条记录 JSON。
+   写用 GET（浏览器跨域下 POST 不可用），单次 URL 上限约 20KB；
+   读加 cache-buster 穿透缓存；不存在的 key 返回空串，需容错。 */
+var SHARE_API='https://textdb.online';
+var SHARE_RE=/^[0-9a-zA-Z-_]{6,60}$/;
+function shGet(key){
+  return fetch(SHARE_API+'/'+encodeURIComponent(key)+'?cb='+Date.now())
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.text();});
+}
+function shPut(key,val){
+  return fetch(SHARE_API+'/update/?key='+encodeURIComponent(key)+'&value='+encodeURIComponent(val))
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return true;});
+}
+function shSave(rec){        // 写单条分片（过大自动拆块）+ 更新索引
+  var body=JSON.stringify(rec);
+  var chunks=Math.ceil(encodeURIComponent(body).length/15000)||1;
+  var idx={v:1,list:{}};
+  return shGet(GH.bin+'i').then(function(txt){
+    try{var j=JSON.parse(txt);if(j&&j.v===1&&j.list)idx=j;}catch(e){}
+    idx.list[rec.id]={t:rec.updatedAt||Date.now(),c:!!rec.confirmed,n:chunks};
+    var chain=Promise.resolve();
+    for(var i=0;i<chunks;i++){
+      (function(i){
+        var part=chunks===1?body:body.slice(Math.floor(body.length*i/chunks),Math.floor(body.length*(i+1)/chunks));
+        chain=chain.then(function(){return shPut(GH.bin+'r'+rec.id+(chunks===1?'':'#'+i),part);});
+      })(i);
+    }
+    return chain;
+  }).then(function(){return shPut(GH.bin+'i',JSON.stringify(idx));});
+}
+function shFetch(){          // 拉取共享库全部记录（按索引块数拼接）
+  return shGet(GH.bin+'i').then(function(txt){
+    var idx=null;try{idx=JSON.parse(txt);}catch(e){}
+    if(!idx||idx.v!==1||!idx.list)return [];
+    return Promise.all(Object.keys(idx.list).map(function(id){
+      var n=(idx.list[id]&&idx.list[id].n)||1,keys=[],i;
+      for(i=0;i<n;i++)keys.push(GH.bin+'r'+id+(n===1?'':'#'+i));
+      return Promise.all(keys.map(function(k){
+        return shGet(k).catch(function(){return '';});
+      })).then(function(ps){
+        try{var r=JSON.parse(ps.join(''));return (r&&r.id===id)?r:null;}catch(e){return null;}
+      });
+    })).then(function(list){return list.filter(Boolean);});
+  });
+}
+function mergeCloud(cloud){   // 云端并入本地：confirmed 优先，其次 updatedAt 新者胜
+  var map={};
+  recs.forEach(function(r){map[r.id]=r;});
+  cloud.forEach(function(c){
+    var old=map[c.id];
+    if(!old){recs.push(c);map[c.id]=c;return;}
+    var win;
+    if(!!c.confirmed!==!!old.confirmed)win=c.confirmed?c:old;
+    else win=(c.updatedAt||0)>=(old.updatedAt||0)?c:old;
+    map[c.id]=win;
+  });
+  recs=Object.keys(map).map(function(k){return map[k];});
+  saveLocal();
+}
+function syncStatus(kind,txt){
+  var c=$('syncChip');c.className='chip sync '+kind;$('syncTxt').textContent=txt;
+}
+function pullCloud(silent){
+  if(GH.mode==='cloud'){
+    syncStatus('local','同步中…');
+    return ghFetch().then(function(cloud){mergeCloud(cloud);renderAll();syncStatus('cloud','云同步 · '+cloud.length+'条');return true;})
+      .catch(function(e){syncStatus('err','云端不可达·本地模式');if(!silent)toast('云端拉取失败：'+e.message+'，已使用本地数据','warn');return false;});
+  }
+  if(GH.mode==='share'){
+    syncStatus('local','同步中…');
+    return shFetch().then(function(cloud){mergeCloud(cloud);renderAll();syncStatus('cloud','免登录共享 · '+cloud.length+'条');return true;})
+      .catch(function(e){syncStatus('err','共享库不可达·本地模式');if(!silent)toast('共享数据拉取失败：'+e.message+'，已使用本地数据','warn');return false;});
+  }
+  return Promise.resolve(false);
+}
+function persist(rec){        // 统一保存入口：本地必存，云/共享异步追加
+  rec.updatedAt=Date.now();
+  var i=recs.findIndex(function(r){return r.id===rec.id;});
+  if(i<0)recs.push(rec);else recs[i]=rec;
+  saveLocal();
+  if(GH.mode==='cloud')return ghSave(rec).then(function(){syncStatus('cloud','云同步 · 已同步');return 'cloud';})
+    .catch(function(e){syncStatus('err','写入失败·暂存本地');return 'localfail:'+e.message;});
+  if(GH.mode==='share')return shSave(rec).then(function(){syncStatus('cloud','免登录共享 · 已同步');return 'cloud';})
+    .catch(function(e){syncStatus('err','写入失败·暂存本地');return 'localfail:'+e.message;});
+  return Promise.resolve('local');
+}
+
+/* ================= Toast ================= */
+var toastTimer=null;
+function toast(msg,kind){
+  var t=$('toast');t.textContent=msg;t.className=kind?('show '+kind):'show';
+  clearTimeout(toastTimer);toastTimer=setTimeout(function(){t.className='';},2600);
+}
+
+/* ================= 签名板 =================
+   用 requestAnimationFrame 等 DOM 完成渲染后再量取尺寸并初始化 canvas；
+   pointer 事件统一处理鼠标/触摸；保存时清理 base64 换行符。 */
+function makePad(cv,area){
+  var ctx=cv.getContext('2d'),drawing=false,dpr=1,last=null,dirty=false;
+  function fit(){
+    var r=area.getBoundingClientRect();
+    if(r.width<10)return;
+    dpr=Math.min(window.devicePixelRatio||1,2.5);
+    var w=Math.round(r.width*dpr),h=Math.round(r.height*dpr);
+    /* 对 width/height 赋值即使值相同也会清空画布，必须加尺寸守卫，
+       否则 init 的 rAF fit 会在 load 回显之后把签名擦掉 */
+    if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h;}
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#14403c';ctx.lineWidth=2.6;
+  }
+  function pos(e){var r=cv.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
+  function stroke(a,b){
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+  }
+  cv.addEventListener('pointerdown',function(e){
+    e.preventDefault();try{cv.setPointerCapture(e.pointerId);}catch(_){}
+    if(!dirty)fit();          // 首笔前确保尺寸正确
+    drawing=true;last=pos(e);dirty=true;area.classList.add('dirty');
+    ctx.beginPath();ctx.arc(last.x,last.y,1.3,0,Math.PI*2);ctx.fillStyle=ctx.strokeStyle;ctx.fill();
+  });
+  cv.addEventListener('pointermove',function(e){
+    if(!drawing)return;e.preventDefault();
+    var p=pos(e);stroke(last,p);last=p;
+  });
+  function up(e){if(!drawing)return;drawing=false;try{cv.releasePointerCapture(e.pointerId);}catch(_){}}
+  cv.addEventListener('pointerup',up);
+  cv.addEventListener('pointercancel',up);
+  cv.addEventListener('pointerleave',function(e){if(drawing)up(e);});
+  return {
+    /* 同步 fit：外层已用双 rAF 等待布局，若此处再排 rAF fit，
+       会与 load 的 onload 绘制产生时序竞争（弹窗布局宽度变化时二次清空画布） */
+    init:function(){dirty=false;area.classList.remove('dirty');fit();},
+    clear:function(){fit();ctx.clearRect(0,0,cv.width,cv.height);area.classList.remove('dirty');dirty=false;},
+    value:function(){                      // 输出干净 base64（去换行）
+      if(!dirty)return '';
+      try{return cleanB64(cv.toDataURL('image/png'));}catch(e){return '';}
+    },
+    load:function(b64){                    // 编辑时把已有签名画回画布，可继续修改
+      fit();
+      if(!b64){dirty=false;area.classList.remove('dirty');return;}
+      var img=new Image();
+      img.onload=function(){ctx.clearRect(0,0,cv.width,cv.height);ctx.drawImage(img,0,0,cv.width/dpr,cv.height/dpr);dirty=true;area.classList.add('dirty');};
+      img.onerror=function(){dirty=false;area.classList.remove('dirty');};
+      img.src=b64;
+    }
+  };
+}
+var padEdit,padSign;
+
+/* ================= 视角渲染 ================= */
+function curFilter(r){       // 记录是否属于当前视角
+  if(state.group==='admin')return true;
+  if(state.group==='emp')return shopOf(r.no)&&shopOf(r.no).emp===state.who;
+  return r.no===state.who;
+}
+function renderTabs(){
+  document.querySelectorAll('#tabs .tab').forEach(function(t){
+    t.classList.toggle('on',t.dataset.g===state.group);
+  });
+  var sub=$('subTabs');sub.innerHTML='';
+  if(state.group==='admin'){sub.style.display='none';return;}
+  sub.style.display='flex';
+  if(state.group==='emp'){
+    for(var i=0;i<8;i++){
+      var e=String.fromCharCode(65+i);
+      var b=document.createElement('button');
+      b.className='cchip'+(state.who===e?' on':'');
+      var sps=empShops(e);
+      b.innerHTML='员工'+e+' <small>'+sps[0].start+'楼 · '+sps[0].name+' / '+sps[1].name+'</small>';
+      b.onclick=(function(ee){return function(){state.who=ee;renderAll();setFold(true);};})(e);
+      sub.appendChild(b);
+    }
+  }else{
+    SHOPS.forEach(function(sp){
+      var b=document.createElement('button');
+      b.className='cchip'+(state.who===sp.no?' on':'');
+      b.innerHTML=sp.no+' <small>'+sp.start+'楼 · '+sp.name+'</small>';
+      b.onclick=(function(no){return function(){state.who=no;renderAll();setFold(true);};})(sp.no);
+      sub.appendChild(b);
+    });
+  }
+}
+function renderBanner(){
+  var txt;
+  if(state.group==='admin')txt='管理员视角：查看全部抄表记录与统计汇总。数据统计仅展示，不参与业务编辑。';
+  else if(state.group==='emp'){
+    var sp=empShops(state.who).map(function(x){return x.no;}).join(' / ');
+    txt='您是员工'+state.who+'，负责商户 '+sp+'。可新增抄表、编辑未确认记录；商户确认签字后记录锁定，不可再编辑。';
+  }else txt='您是商户'+state.who+'（'+shopOf(state.who).name+'）。仅可查看本商铺记录，并对未确认记录进行签字确认。';
+  $('bannerTxt').textContent=txt;
+  $('roleTxt').textContent=state.group==='admin'?'管理员 · 全部数据':(state.group==='emp'?'员工'+state.who+' · 负责商户'+empShops(state.who).map(function(x){return x.no;}).join('/'):'商户'+state.who+' · '+shopOf(state.who).name);
+  $('fab').classList.toggle('hidden',state.group!=='emp');
+  $('adminPanel').classList.toggle('hidden',state.group!=='admin');
+}
+function pillOf(r){
+  return r.confirmed
+    ?'<span class="pill locked"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>已确认·锁定</span>'
+    :'<span class="pill pending"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>待商户确认</span>';
+}
+function cardHtml(r){
+  var sp=shopOf(r.no)||{name:'未知商户',emp:'-'};
+  var btns='<button class="btn btn-view" data-view="'+r.id+'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>查看详情</button>';
+  if(state.group==='emp'){
+    if(!r.confirmed)btns+='<button class="btn btn-edit" data-edit="'+r.id+'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>编辑抄表</button>';
+    else btns+='<span class="lock-note"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>商户已确认，记录锁定</span>';
+  }else if(state.group==='shop'&&!r.confirmed){
+    btns+='<button class="btn btn-sign" data-sign="'+r.id+'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>商户签字确认</button>';
+  }
+  return '<div class="card">'+
+    '<div class="c-head">'+
+      '<div class="avatar"><b>'+r.no+'</b><small>商铺</small></div>'+
+      '<div class="c-title"><b>'+r.name+'</b><span>负责人：员工'+sp.emp+' · 抄表人：'+r.reader+'</span></div>'+
+      pillOf(r)+
+    '</div>'+
+    '<div class="c-metrics">'+
+      '<div class="m"><small>上期读数</small><span class="num">'+Number(r.prev).toFixed(2)+'</span></div>'+
+      '<div class="m"><small>本期读数</small><span class="num">'+Number(r.curr).toFixed(2)+'</span></div>'+
+      '<div class="m hot"><small>本期用水量</small><span class="num">'+Number(r.usage).toFixed(2)+'</span></div>'+
+    '</div>'+
+    '<div class="c-foot">'+btns+'<span class="meta">抄表日期 '+r.date+(r.confirmedAt?' · 确认于 '+new Date(r.confirmedAt).toLocaleDateString('zh-CN'):'')+'</span></div>'+
+  '</div>';
+}
+function weekday(ds){try{return '周'+'日一二三四五六'.charAt(new Date(ds).getDay());}catch(e){return '';}}
+function renderList(){            // 按抄表日期分组，日期新者在上，便于翻阅历史
+  var arr=recs.filter(curFilter).sort(function(a,b){
+    return (b.date||'').localeCompare(a.date||'')||(b.updatedAt||0)-(a.updatedAt||0);
+  });
+  var byDate={},dates=[];
+  arr.forEach(function(r){if(!byDate[r.date]){byDate[r.date]=[];dates.push(r.date);}byDate[r.date].push(r);});
+  var sb=dates.map(function(d){
+    return '<div class="day-group"><div class="day-head">'+
+      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>'+
+      d+'<small>'+weekday(d)+' · '+byDate[d].length+' 条</small></div>'+
+      byDate[d].map(cardHtml).join('')+'</div>';
+  }).join('');
+  $('list').innerHTML=sb;
+  $('empty').classList.toggle('hidden',arr.length>0);
+}
+function renderAdmin(){
+  if(state.group!=='admin')return;
+  var done=recs.filter(function(r){return r.confirmed;});
+  var totalUse=recs.reduce(function(s,r){return s+(+r.usage||0);},0);
+  $('stTotal').textContent=recs.length;
+  $('stDone').textContent=done.length;
+  $('stWait').textContent=recs.length-done.length;
+  $('stUsage').textContent=totalUse.toFixed(1);
+  var per=SHOPS.reduce(function(m,sp){m[sp.emp]={n:0,u:0};return m;},{});
+  recs.forEach(function(r){var sp=shopOf(r.no);if(!sp)return;per[sp.emp].n++;per[sp.emp].u+=(+r.usage||0);});
+  var rows=Object.keys(per).map(function(k){return{e:k,n:per[k].n,u:per[k].u};}).sort(function(a,b){return b.n-a.n||b.u-a.u;});
+  var max=Math.max.apply(null,rows.map(function(x){return x.n;}).concat([1]));
+  $('rankBody').innerHTML=rows.map(function(x){
+    var hl=x.u>0?'':' class="amberline"';
+    return '<div class="rk"'+hl+'><span class="lbl">员工'+x.e+'<em> · '+x.u.toFixed(1)+'m³</em></span>'+
+      '<span class="bar"><i style="width:'+Math.round(x.n/max*100)+'%"></i></span><span class="val">'+x.n+'条</span></div>';
+  }).join('');
+}
+function renderAll(){renderTabs();renderBanner();renderList();renderAdmin();}
+
+/* ================= 弹窗开关 ================= */
+function openMask(id){$(id).classList.add('show');}
+function closeMask(id){$(id).classList.remove('show');}
+document.addEventListener('click',function(e){
+  var x=e.target.closest('[data-close]');
+  if(x)closeMask(x.dataset.close);
+});
+
+/* ================= 弹窗①：编辑录入 ================= */
+function fillShopSelect(){
+  var sel=$('fShop');sel.innerHTML='';
+  var list=(state.group==='emp')?empShops(state.who):SHOPS;
+  list.forEach(function(sp){
+    var o=document.createElement('option');
+    o.value=sp.no;o.textContent=sp.no+' · '+sp.name+'（负责人：员工'+sp.emp+'）';
+    sel.appendChild(o);
+  });
+}
+function calcUsage(){
+  var p=parseFloat($('fPrev').value),c=parseFloat($('fCurr').value);
+  var ok=isFinite(p)&&isFinite(c);
+  $('fUsage').textContent=ok?Math.max(0,Math.round((c-p)*100)/100).toFixed(2):'0.00';
+  $('fUsage').style.color=ok&&c<p?'var(--red)':'var(--teal)';
+}
+function openEdit(id){
+  var r=id?recs.find(function(x){return x.id===id;}):null;
+  if(r&&r.confirmed){toast('该记录商户已确认签字，已锁定，不可编辑','warn');return;}
+  editId=r?r.id:null;
+  $('editTitle').textContent=r?'编辑抄表 · 商户'+r.no:'新增抄表';
+  $('saveEditTxt').textContent=r?'保存修改':'保存抄表记录';
+  fillShopSelect();
+  if(r){
+    $('fShop').value=r.no;$('fShop').disabled=true;
+    $('fPrev').value=r.prev;$('fCurr').value=r.curr;
+    $('fDate').value=r.date;$('fReader').value=r.reader;
+  }else{
+    $('fShop').disabled=false;
+    $('fPrev').value='';$('fCurr').value='';
+    $('fDate').value=new Date().toISOString().slice(0,10);
+    $('fReader').value=state.group==='emp'?('员工'+state.who):'';
+  }
+  calcUsage();
+  openMask('mEdit');
+  /* 关键：等 DOM 渲染完成后再初始化/回显签名 canvas */
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      padEdit.init();
+      if(r)padEdit.load(r.empSign);
+    });
+  });
+}
+function validRec(){
+  var p=parseFloat($('fPrev').value),c=parseFloat($('fCurr').value);
+  if(!isFinite(p)||!isFinite(c)){toast('请填写上期与本期水表读数','warn');return null;}
+  if(p<0||c<0){toast('水表读数不能为负数','warn');return null;}
+  if(c<p){toast('本期读数不能小于上期读数，请核对','warn');return null;}
+  if(!$('fDate').value){toast('请选择抄表日期','warn');return null;}
+  if(!$('fReader').value.trim()){toast('请填写抄表人','warn');return null;}
+  var sig=padEdit.value();
+  if(!sig||(sig.length<200)){toast('请员工手写签名后再保存','warn');return null;}
+  var no=$('fShop').value;
+  if(!no){toast('请选择商户','warn');return null;}
+  var sp=shopOf(no);
+  return {no:no,name:sp.name,prev:Math.round(p*100)/100,curr:Math.round(c*100)/100,
+    usage:Math.round((c-p)*100)/100,date:$('fDate').value,reader:$('fReader').value.trim(),
+    empSign:sig,emp:sp.emp};
+}
+function saveEdit(){
+  var d=validRec();if(!d)return;
+  var rec;
+  if(editId){
+    rec=recs.find(function(x){return x.id===editId;});
+    if(!rec)return;
+    if(rec.confirmed){toast('记录已锁定，不可编辑','warn');closeMask('mEdit');return;}
+    Object.assign(rec,d);
+  }else{
+    rec=Object.assign({id:uid(),confirmed:false,shopSign:'',confirmedAt:0,createdAt:Date.now()},d);
+  }
+  var btn=$('saveEdit');btn.disabled=true;$('saveEditTxt').textContent='保存中…';
+  persist(rec).then(function(res){
+    btn.disabled=false;$('saveEditTxt').textContent=editId?'保存修改':'保存抄表记录';
+    closeMask('mEdit');
+    if(res==='cloud'){toast('已保存并同步到 GitHub Issues','ok');}
+    else if(res&&res.indexOf('localfail')===0){toast('已保存到本地，云同步失败（'+res.slice(10)+'），可稍后在设置中重试','warn');}
+    else toast(editId?'修改已保存':'抄表记录已保存','ok');
+    renderAll();
+  });
+}
+
+/* ================= 弹窗②：商户签字确认 ================= */
+function openSign(id){
+  var r=recs.find(function(x){return x.id===id;});
+  if(!r)return;
+  if(r.confirmed){toast('该记录已完成商户确认，无需再签字','warn');return;}
+  signId=id;
+  $('signRec').innerHTML=
+    '<h5><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0a4f4a" stroke-width="2" stroke-linecap="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>'+
+    '商户'+r.no+' · '+r.name+' · 待确认记录</h5>'+
+    '<div class="sr"><span>上期读数</span><b>'+Number(r.prev).toFixed(2)+' m³</b></div>'+
+    '<div class="sr"><span>本期读数</span><b>'+Number(r.curr).toFixed(2)+' m³</b></div>'+
+    '<div class="sr"><span>本期用水量</span><b>'+Number(r.usage).toFixed(2)+' m³</b></div>'+
+    '<div class="sr"><span>抄表日期 / 抄表人</span><b>'+r.date+' · '+r.reader+'</b></div>';
+  openMask('mSign');
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){padSign.init();});
+  });
+}
+function saveSign(){
+  var r=recs.find(function(x){return x.id===signId;});
+  if(!r)return;
+  if(r.confirmed){toast('记录已被确认，请勿重复操作','warn');closeMask('mSign');return;}
+  var sig=padSign.value();
+  if(!sig||sig.length<200){toast('请商户手写签名后再确认','warn');return;}
+  r.confirmed=true;r.shopSign=sig;r.confirmedAt=Date.now();
+  var btn=$('saveSign');btn.disabled=true;
+  persist(r).then(function(res){
+    btn.disabled=false;
+    closeMask('mSign');
+    if(res==='cloud')toast('商户已确认签字，记录已锁定并同步','ok');
+    else if(res&&res.indexOf('localfail')===0)toast('已确认签字（本地），云同步失败：'+res.slice(10),'warn');
+    else toast('商户已确认签字，记录已锁定','ok');
+    renderAll();
+  });
+}
+
+/* ================= 弹窗③：查看详情（只读 · img 回显签名） ================= */
+function dRow(k,v,mono){
+  return '<div class="d-row"><span class="k">'+k+'</span><span class="v'+(mono?' mono':'')+'">'+v+'</span></div>';
+}
+function sigImgHtml(b64,who,when){
+  var box=document.createElement('div');
+  box.className='sig-box'+(b64?'':' none');
+  var cap=document.createElement('div');cap.className='cap';
+  cap.innerHTML='<b>'+who+'</b><span>'+(when||'')+'</span>';
+  var w=document.createElement('div');w.className='imgw';
+  if(b64){
+    var img=document.createElement('img');
+    img.alt=who+'签名';
+    img.onerror=function(){          // 图片异常容错：降级为占位文字
+      w.textContent='签名图片加载失败';
+      w.style.color='#c98a8a';w.style.fontSize='12px';
+      img.remove();
+    };
+    img.src=cleanB64(b64);           // 清理可能的换行符
+    w.appendChild(img);
+  }else{
+    w.textContent='（暂无签名）';
+  }
+  box.appendChild(cap);box.appendChild(w);
+  return box;
+}
+function openView(id){
+  var r=recs.find(function(x){return x.id===id;});
+  if(!r)return;
+  var sp=shopOf(r.no)||{name:'未知商户',emp:'-'};
+  var body=$('viewBody');
+  body.innerHTML=
+    '<div class="d-row" style="border-bottom:none;padding-top:0"><span class="k">确认状态</span>'+
+      (r.confirmed?'<span class="pill locked">已确认 · 已锁定</span>':'<span class="pill pending">待商户确认</span>')+'</div>'+
+    dRow('商户',r.no+' · '+r.name)+
+    dRow('负责员工','员工'+sp.emp)+
+    dRow('上期水表读数',Number(r.prev).toFixed(2)+' m³',true)+
+    dRow('本期水表读数',Number(r.curr).toFixed(2)+' m³',true)+
+    dRow('本期用水量（自动计算）',Number(r.usage).toFixed(2)+' m³',true)+
+    dRow('抄表日期',r.date)+
+    dRow('抄表人',r.reader)+
+    (r.confirmedAt?dRow('商户确认时间',new Date(r.confirmedAt).toLocaleString('zh-CN')):'')+
+    '<div class="d-sec">签名存档（base64 · 只读）</div>';
+  var grid=document.createElement('div');grid.className='sig-grid';
+  grid.appendChild(sigImgHtml(r.empSign,'员工签名','抄表人：'+r.reader));
+  grid.appendChild(sigImgHtml(r.shopSign,'商户签名',r.confirmedAt?new Date(r.confirmedAt).toLocaleDateString('zh-CN'):''));
+  body.appendChild(grid);
+  if(r.confirmed){
+    var note=document.createElement('div');note.className='d-lock';
+    note.innerHTML='<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="display:inline;vertical-align:-2px"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg> 商户已确认签字，本记录已锁定，员工不可编辑';
+    body.appendChild(note);
+  }
+  openMask('mView');
+}
+
+/* ================= 弹窗④：设置 ================= */
+function refreshSetUI(){
+  $('segLocal').classList.toggle('on',GH.mode==='local');
+  $('segShare').classList.toggle('on',GH.mode==='share');
+  $('segCloud').classList.toggle('on',GH.mode==='cloud');
+  $('shareCfg').classList.toggle('hidden',GH.mode!=='share');
+  $('cloudCfg').classList.toggle('hidden',GH.mode!=='cloud');
+  $('setBin').value=(GH.bin===DEFAULT_BIN)?'':GH.bin;
+  $('setRepo').value=GH.repo;$('setToken').value=GH.token;
+}
+function openSet(){refreshSetUI();openMask('mSet');}
+$('segLocal').onclick=function(){GH.mode='local';refreshSetUI();};
+$('segShare').onclick=function(){GH.mode='share';refreshSetUI();};
+$('segCloud').onclick=function(){GH.mode='cloud';refreshSetUI();};
+$('btnSharePull').onclick=function(){
+  var v=$('setBin').value.trim();
+  if(v&&!SHARE_RE.test(v)){toast('共享库 ID 需为 6–60 位字母/数字/连字符/下划线','warn');return;}
+  GH.bin=v||DEFAULT_BIN;
+  var b=$('btnSharePull');b.disabled=true;b.textContent='正在读取共享库…';
+  shFetch().then(function(cloud){
+    mergeCloud(cloud);renderAll();
+    b.disabled=false;b.textContent='测试共享库并拉取数据';
+    toast('共享库连接成功，共 '+cloud.length+' 条记录；点击「保存设置」生效','ok');
+  }).catch(function(e){
+    b.disabled=false;b.textContent='测试共享库并拉取数据';
+    toast('共享库读取失败：'+e.message,'warn');
+  });
+};
+$('btnPull').onclick=function(){
+  GH.repo=$('setRepo').value.trim()||GH.repo;GH.token=$('setToken').value.trim();
+  var b=$('btnPull');b.disabled=true;b.textContent='正在连接…';
+  ghFetch().then(function(cloud){
+    mergeCloud(cloud);renderAll();
+    b.disabled=false;b.textContent='测试连接并拉取云端数据';
+    toast('连接成功，云端共 '+cloud.length+' 条记录','ok');
+  }).catch(function(e){
+    b.disabled=false;b.textContent='测试连接并拉取云端数据';
+    toast('连接失败：'+e.message+'（检查仓库名 / 是否开启 Issues / 令牌）','warn');
+  });
+};
+$('saveSet').onclick=function(){
+  var oldRepo=GH.repo,oldBin=GH.bin;
+  GH.repo=$('setRepo').value.trim()||GH.repo;
+  GH.token=$('setToken').value.trim();
+  if(GH.mode==='share'){
+    var v=$('setBin').value.trim();
+    if(v&&!SHARE_RE.test(v)){toast('共享库 ID 需为 6–60 位字母/数字/连字符/下划线','warn');return;}
+    GH.bin=v||DEFAULT_BIN;
+  }
+  saveCfg();
+  closeMask('mSet');
+  if(GH.mode==='cloud'){
+    if(GH.repo!==oldRepo||recs.length===0)pullCloud(false);
+    else{syncStatus('local','同步中…');pullCloud(false);}
+  }else if(GH.mode==='share'){
+    syncStatus('local','同步中…');
+    pullCloud(false);
+    if(GH.bin!==oldBin)toast('已切换共享库 '+GH.bin+'，正在拉取该库数据','ok');
+    else toast('已保存：免登录共享模式，同一共享库 ID 的设备数据互通','ok');
+  }else{
+    syncStatus('local','本地模式');
+    toast('已保存：当前为本地存储模式','ok');
+  }
+};
+
+/* ================= 列表事件委托 ================= */
+$('list').addEventListener('click',function(e){
+  var v=e.target.closest('[data-view]');if(v){openView(v.dataset.view);return;}
+  var ed=e.target.closest('[data-edit]');if(ed){openEdit(ed.dataset.edit);return;}
+  var sg=e.target.closest('[data-sign]');if(sg){openSign(sg.dataset.sign);return;}
+});
+$('tabs').addEventListener('click',function(e){
+  var t=e.target.closest('.tab');if(!t)return;
+  state.group=t.dataset.g;
+  state.who=state.group==='admin'?'':(state.group==='emp'?'A':'101');
+  renderAll();
+  if(state.group==='admin')setFold(true);   // 管理员即最终选择，自动收起；员工/商户还需挑子项
+});
+$('fab').onclick=function(){openEdit(null);};
+$('fPrev').addEventListener('input',calcUsage);
+$('fCurr').addEventListener('input',calcUsage);
+$('fShop').addEventListener('change',function(){
+  if(state.group!=='emp'){$('fReader').value='员工'+(shopOf(this.value)||{emp:'?'}).emp;}
+});
+$('saveEdit').onclick=saveEdit;
+$('saveSign').onclick=saveSign;
+$('clrEdit').onclick=function(){padEdit.clear();};
+$('clrSign').onclick=function(){padSign.clear();};
+$('btnSettings').onclick=openSet;
+$('syncChip').onclick=openSet;
+$('foldBtn').onclick=function(){setFold(!folded);};
+$('roleChip').onclick=function(){if(folded)setFold(false);};   // 点角色chip展开视角选择
+
+/* ================= 预置示例数据（2条） ================= */
+function demoSig(seed){
+  var path='M20 '+(58+seed%9)+' C 45 '+(18+seed%12)+', 70 '+(80-seed%10)+', 95 45 S 140 '+(16+seed%14)+', 158 55 Q 178 '+(78-seed%8)+', 196 42 T 240 '+(46+seed%10);
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="260" height="92" viewBox="0 0 260 92">'+
+    '<path d="'+path+'" fill="none" stroke="#14403c" stroke-width="3.1" stroke-linecap="round"/>'+
+    '<path d="M150 70 q 22 8 44 -2" fill="none" stroke="#14403c" stroke-width="2.2" stroke-linecap="round" opacity=".65"/></svg>';
+  try{return cleanB64('data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(svg))));}catch(e){return '';}
+}
+function seedDemo(){
+  if(recs.length)return;   // 已有数据不重复预置
+  var today=new Date();
+  function dStr(off){var d=new Date(today.getTime()-off*86400000);return d.toISOString().slice(0,10);}
+  recs=[
+    {id:uid(),no:'101',name:'星巴克',emp:'A',prev:1206.5,curr:1245.2,usage:38.7,date:dStr(6),
+     reader:'员工A',empSign:demoSig(1),shopSign:'',confirmed:false,confirmedAt:0,createdAt:Date.now()-6e8,updatedAt:Date.now()-6e8},
+    {id:uid(),no:'102',name:'M Stand',emp:'A',prev:890.0,curr:931.4,usage:41.4,date:dStr(3),
+     reader:'员工A',empSign:demoSig(2),shopSign:demoSig(5),confirmed:true,confirmedAt:Date.now()-9e7,createdAt:Date.now()-4e8,updatedAt:Date.now()-9e7}
+  ];
+  saveLocal();
+}
+
+/* ================= 启动 ================= */
+function init(){
+  loadCfg();
+  loadFold();
+  setFold(folded);
+  loadLocal();
+  if(GH.mode==='local')seedDemo();   // 共享/云模式不预置示例，保证多端数据干净
+  padEdit=makePad($('cvEdit'),$('areaEdit'));
+  padSign=makePad($('cvSign'),$('areaSign'));
+  renderAll();
+  if(GH.mode!=='local')pullCloud(true);
+  else syncStatus('local','本地模式');
+  /* 窗口尺寸变化后重置画布（保持可写） */
+  window.addEventListener('resize',function(){
+    if($('mEdit').classList.contains('show'))padEdit.init();
+    if($('mSign').classList.contains('show'))padSign.init();
+  });
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);
+else init();
+</script>
+</body>
+</html>
