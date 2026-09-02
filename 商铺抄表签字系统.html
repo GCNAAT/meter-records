@@ -138,6 +138,9 @@ main{max-width:680px;margin:0 auto}
 .pager button:disabled{opacity:.38;cursor:default}
 .pager .pg-info{font-size:12.5px;color:var(--muted)}
 
+.s-foot-btn{display:flex;gap:10px;padding:2px 16px 16px}
+.s-foot-btn .btn{flex:1}
+
 /* 历史记录按日期分组 */
 .day-group{margin:2px 14px 14px}
 .day-head{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--deep);
@@ -431,6 +434,10 @@ main{max-width:680px;margin:0 auto}
       </button>
     </div>
     <div class="s-body" id="viewBody"></div>
+    <div class="s-foot-btn">
+      <button class="btn btn-edit" id="btnPdfSave"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 21h16"/></svg>保存 PDF</button>
+      <button class="btn btn-edit" id="btnPdfShare"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>分享 PDF</button>
+    </div>
   </div>
 </div>
 
@@ -1003,6 +1010,7 @@ function sigImgHtml(b64,who,when){
   return box;
 }
 function openView(id){
+  viewId=id;
   var r=recs.find(function(x){return x.id===id;});
   if(!r)return;
   var sp=shopOf(r.no)||{name:'未知商户',emp:'-'};
@@ -1030,6 +1038,121 @@ function openView(id){
   }
   openMask('mView');
 }
+
+/* ================= PDF 导出 / 分享（jsPDF 在线，离线回退打印） ================= */
+var viewId=null;
+var PDF_CDN='https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
+function loadJspdf(){
+  if(window.jspdf)return Promise.resolve(window.jspdf);
+  return new Promise(function(res,rej){
+    var s=document.createElement('script');
+    s.src=PDF_CDN;s.async=true;
+    s.onload=function(){window.jspdf?res(window.jspdf):rej(new Error('jsPDF 未初始化'));};
+    s.onerror=function(){rej(new Error('无法加载 PDF 库（离线）'));};
+    document.head.appendChild(s);
+  });
+}
+function sigDataURL(b64){
+  var d=cleanB64(b64||'');
+  return (/^data:/i.test(d))?d:('data:image/png;base64,'+d);
+}
+function buildPdf(rec,js){          // 生成一页 A4 抄表单据（原样呈现该次抄表数据）
+  var sp=shopOf(rec.no)||{name:rec.name||'未知商户',emp:'-'};
+  var JSPDF=(js&&js.jsPDF)?js.jsPDF:((js&&js.default)?js.default:js);
+  var doc=new JSPDF({unit:'mm',format:'a4'});
+  var W=210,M=16,C=105,y=26,bw=(W-M*2)/3,bh=16;
+  doc.setFillColor(10,79,74);doc.rect(0,0,W,24,'F');
+  doc.setTextColor(255);doc.setFontSize(15);doc.setFont('helvetica','bold');
+  doc.text('商铺抄表（用水）记录单',C,11,{align:'center'});
+  doc.setFontSize(9.5);doc.setFont('helvetica','normal');
+  doc.text('天津粤海天河城购物中心',C,18.5,{align:'center'});
+  doc.setTextColor(10,79,74);doc.setFontSize(9);doc.setFont('helvetica','bold');
+  doc.text('单据编号：'+rec.id,M,y);
+  doc.text('抄表日期：'+rec.date,W-M,y,{align:'right'});
+  y+=8;
+  doc.setTextColor(20);doc.setFontSize(12);doc.setFont('helvetica','bold');
+  doc.text('商户：'+rec.no+'　'+rec.name,M,y);
+  doc.setFontSize(9.5);doc.setFont('helvetica','normal');doc.setTextColor(90);
+  doc.text('负责员工：员工'+sp.emp+'　·　楼层：'+((sp.floor||'-'))+' 层',W-M,y,{align:'right'});
+  y+=8;
+  function cell(x,tt,val){
+    doc.setFillColor(244,247,246);doc.setDrawColor(199,214,211);
+    doc.roundedRect(x,y,bw,bh,1.5,1.5,'FD');
+    doc.setTextColor(122);doc.setFontSize(8);doc.setFont('helvetica','normal');
+    doc.text(tt,x+bw/2,y+6.5,{align:'center'});
+    doc.setTextColor(15);doc.setFontSize(12);doc.setFont('helvetica','bold');
+    doc.text(Number(val).toFixed(2)+' m³',x+bw/2,y+13,{align:'center'});
+  }
+  cell(M,'上期水表读数',rec.prev);
+  cell(M+bw,'本期水表读数',rec.curr);
+  cell(M+bw*2,'本期用水量',rec.usage);
+  y+=bh+9;
+  doc.setTextColor(60);doc.setFontSize(9.5);doc.setFont('helvetica','normal');
+  doc.text('抄表人：'+rec.reader,M,y);
+  doc.text('商户确认：'+(rec.confirmed?'已确认 · 已锁定':'待商户确认'),W-M,y,{align:'right'});
+  y+=4;doc.setTextColor(130);doc.setFontSize(8);
+  doc.text('本读数依据水表实际抄见，若有异议请商户当场提出。',M,y);
+  y+=11;
+  function sig(b64,label){
+    doc.setDrawColor(199,214,211);doc.rect(M,y,W-M*2,34);
+    doc.setTextColor(10,79,74);doc.setFontSize(8.5);doc.setFont('helvetica','bold');
+    doc.text(label,M+4,y+6);
+    if(label.indexOf('商户')===0&&rec.confirmed){
+      doc.setTextColor(200,70,60);doc.setFontSize(9);
+      doc.text('已确认',W-M-16,y+6);
+    }
+    if(b64){
+      try{doc.addImage(sigDataURL(b64),'PNG',M+4,y+8,66,23);}catch(e){}
+    }else{
+      doc.setTextColor(170);doc.setFontSize(8.5);doc.setFont('helvetica','normal');
+      doc.text('（暂无签名）',M+4,y+22);
+    }
+  }
+  sig(rec.empSign,'员工签名 · 抄表人：'+rec.reader);
+  y+=40;
+  sig(rec.shopSign,'商户签名 · '+(rec.confirmed?('确认时间：'+new Date(rec.confirmedAt).toLocaleString('zh-CN')):'尚未确认'));
+  y+=40;
+  doc.setDrawColor(210,220,218);doc.line(M,y,W-M,y);
+  doc.setTextColor(150);doc.setFontSize(8);
+  doc.text('本单由《商铺抄表签字系统》生成　·　生成时间：'+new Date().toLocaleString('zh-CN'),C,292,{align:'center'});
+  return doc;
+}
+function fileToDownload(blob,name){
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=name;document.body.appendChild(a);a.click();
+  setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},1500);
+}
+function pdfFallback(e){
+  toast('在线 PDF 不可用（'+e.message+'），请用浏览器打印并另存为 PDF','warn');
+  window.print();
+}
+function pdfSave(rec){             // 保存 PDF 文件
+  loadJspdf().then(function(js){
+    var doc=buildPdf(rec,js);
+    doc.save('抄表单-'+rec.no+'-'+rec.date+'.pdf');
+    toast('已生成并保存 PDF','ok');
+  }).catch(pdfFallback);
+}
+function pdfShare(rec){            // 分享 PDF 文件（系统分享面板 → 微信/文件）
+  loadJspdf().then(function(js){
+    var doc=buildPdf(rec,js),name='抄表单-'+rec.no+'-'+rec.date+'.pdf';
+    var file=new File([doc.output('blob')],name,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      navigator.share({files:[file],title:name}).catch(function(){doc.save(name);});
+      toast('已生成 PDF，可在分享面板选择保存或发送','ok');
+    }else{
+      fileToDownload(file);
+      toast('当前浏览器不支持文件分享，已改为下载','ok');
+    }
+  }).catch(pdfFallback);
+}
+(function(){                       // 详情弹窗底部按钮接线
+  var ms=$('btnPdfSave'),mk=$('btnPdfShare');
+  if(!ms||!mk)return;
+  function recOf(){return recs.find(function(x){return x.id===viewId;});}
+  ms.onclick=function(){var r=recOf();if(r)pdfSave(r);};
+  mk.onclick=function(){var r=recOf();if(r)pdfShare(r);};
+})();
 
 /* ================= 弹窗④：设置 ================= */
 function refreshSetUI(){
